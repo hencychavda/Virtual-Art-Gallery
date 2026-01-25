@@ -1,1 +1,515 @@
-test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Virtual Art Gallery</title>
+<link rel="preconnect" href="https://images.unsplash.com" />
+<style>
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background: linear-gradient(180deg,#0f1724 0%, #071223 60%); color:#fff; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+  .app {
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+    padding:28px;
+  }
+
+  header {
+    width:100%;
+    max-width:1200px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .brand {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  .logo {
+    width:56px; height:56px; border-radius:12px;
+    background:linear-gradient(135deg,#7c3aed,#06b6d4);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:20px; color:white; box-shadow:0 8px 30px rgba(12,12,30,.6);
+  }
+  h1 { font-size:20px; letter-spacing:0.6px; }
+  .controls { display:flex; gap:8px; align-items:center; }
+
+  .stage {
+    width:100%;
+    max-width:1200px;
+    height:62vh;
+    min-height:420px;
+    position:relative;
+    perspective:1400px;
+    overflow:visible;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .carousel {
+    position:relative;
+    width:78%;
+    height:85%;
+    transform-style:preserve-3d;
+    transition: transform 1s cubic-bezier(.2,.9,.25,1);
+    will-change:transform;
+  }
+
+  .card {
+    position:absolute;
+    left:50%; top:50%;
+    transform-origin:center center;
+    width:360px; height:240px;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow: 0 20px 40px rgba(2,6,23,0.65);
+    transition: transform 700ms cubic-bezier(.2,.9,.25,1), filter 400ms;
+    background:#111;
+    cursor: pointer;
+    user-select:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .card img {
+    width:100%; height:100%; object-fit:cover;
+    display:block;
+    transition: transform 450ms ease;
+  }
+  .card:hover { transform:translateZ(60px) scale(1.03); }
+  .card.dim { filter:grayscale(.35) contrast(.85) brightness(.9); }
+
+  .label {
+    position:absolute;
+    left:12px; bottom:12px;
+    background:linear-gradient(90deg, rgba(0,0,0,.6), rgba(0,0,0,.3));
+    padding:8px 12px; border-radius:10px;
+    font-size:13px; backdrop-filter: blur(4px);
+  }
+
+  .nav {
+    position:absolute;
+    width:100%;
+    top:50%;
+    transform:translateY(-50%);
+    display:flex;
+    justify-content:space-between;
+    pointer-events:none;
+  }
+  .nav button {
+    pointer-events:all;
+    border:0; background:rgba(0,0,0,0.45);
+    color:white; padding:14px; border-radius:999px; margin:12px;
+    box-shadow:0 8px 20px rgba(2,6,23,.5);
+    cursor:pointer; backdrop-filter: blur(6px);
+  }
+  .nav button:active { transform:scale(.98); }
+
+  aside.info {
+    position:relative;
+    width:100%;
+    max-width:300px;
+    padding:12px;
+    border-radius:12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+    box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .meta { font-size:13px; color: #cbd5e1; }
+  .meta b{ color:#fff; }
+
+  .thumbs {
+    width:100%;
+    max-width:1200px;
+    display:flex;
+    gap:8px;
+    overflow:auto;
+    padding:10px;
+    align-items:center;
+  }
+  .thumb {
+    width:92px; height:60px; flex:0 0 auto; border-radius:8px; overflow:hidden; cursor:pointer; border:2px solid transparent;
+    box-shadow: 0 6px 18px rgba(2,6,23,0.5);
+  }
+  .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .thumb.active { border-color: rgba(124,58,237,0.95); transform:translateY(-6px); }
+
+  .modal {
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background:linear-gradient(180deg, rgba(1,6,18,0.72), rgba(0,0,0,0.88));
+    z-index:9999;
+  }
+  .modal.open { display:flex; }
+  .modal .zoom {
+    width:88vw; max-width:1100px; height:74vh; max-height:820px; border-radius:14px; overflow:hidden; background:#000; position:relative;
+    box-shadow:0 40px 120px rgba(2,6,23,.8);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .modal img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
+  .modal .close {
+    position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.06); border-radius:10px; padding:8px; border:0; color:#fff; cursor:pointer;
+  }
+  .modal .caption {
+    position:absolute; bottom:12px; left:12px; right:12px; color:#e6eef8;
+    background:linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.45)); padding:10px; border-radius:9px;
+    font-size:14px;
+  }
+
+  .small-controls { display:flex; gap:8px; align-items:center; }
+  .btn {
+    border:0; background:linear-gradient(90deg,#06b6d4,#7c3aed); padding:10px 14px; border-radius:10px; cursor:pointer; color:#fff; font-weight:600;
+    box-shadow:0 10px 30px rgba(12,12,30,.5);
+  }
+  .btn.ghost { background:transparent; border:1px solid rgba(255,255,255,0.06); color:#dbeafe; padding:8px 10px; font-weight:500; }
+
+  @media (max-width:980px) {
+    .stage { height:56vh; min-height:360px; }
+    .carousel { width:92%; }
+    .card { width:320px; height:200px; }
+    .info { display:none; }
+  }
+  @media (max-width:620px) {
+    header { flex-direction:column; align-items:flex-start; gap:10px; }
+    .card { width:260px; height:170px; }
+    .thumb { width:72px; height:48px; }
+  }
+
+  .pulse { animation:pulse 4s ease-in-out infinite; }
+  @keyframes pulse { 0% { transform: scale(1);} 50% { transform: scale(1.02);} 100%{ transform: scale(1);} }
+
+  button:focus { outline:3px solid rgba(99,102,241,0.28); outline-offset:4px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true">VA</div>
+      <div>
+        <h1>Virtual Art Gallery</h1>
+        <div style="font-size:13px;color:#9fb3d8;">Immersive 3D navigation · Zoom · Info popups · Ambient music</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="small-controls" aria-hidden="false">
+        <button id="autoplayToggle" class="btn ghost" title="Toggle autoplay">Autoplay: <span id="apState">On</span></button>
+        <button id="musicToggle" class="btn ghost" title="Toggle ambient music">Music: <span id="musicState">On</span></button>
+        <button id="infoBtn" class="btn ghost" title="Gallery info">Gallery Info</button>
+      </div>
+    </div>
+  </header>
+
+  <div style="display:flex; width:100%; max-width:1200px; gap:18px; align-items:flex-start;">
+
+    <div style="flex:1;">
+      <section class="stage" aria-label="Gallery stage">
+        <div id="carousel" class="carousel" role="listbox" aria-live="polite"></div>
+
+        <div class="nav" aria-hidden="false">
+          <button id="prevBtn" aria-label="Previous artwork">◀</button>
+          <button id="nextBtn" aria-label="Next artwork">▶</button>
+        </div>
+      </section>
+
+      <div id="thumbs" class="thumbs" aria-label="Art thumbnails"></div>
+    </div>
+
+    <aside class="info" aria-label="Artwork information">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="meta">Theme: <b>Contemporary Collection</b></div>
+          <div class="meta">Mode: <b>3D Carousel · Zoom · Captions</b></div>
+        </div>
+        <div style="text-align:right;">
+          <div class="meta">Use ← → or swipe</div>
+          <div style="margin-top:6px;">
+            <button id="prevSmall" class="btn ghost" aria-label="Previous">Prev</button>
+            <button id="nextSmall" class="btn ghost" aria-label="Next">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:6px;">
+        <div class="meta">Autoplay speed</div>
+        <input id="speed" type="range" min="1200" max="6000" step="200" value="2600" style="width:100%; margin-top:8px;">
+      </div>
+
+      <div style="margin-top:6px; display:flex; flex-direction:column; gap:8px;">
+        <div class="meta">Current:</div>
+        <div id="metaTitle" style="font-weight:700; font-size:16px;">—</div>
+        <div id="metaArtist" class="meta">—</div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <button id="downloadBtn" class="btn" title="Download current artwork">Download</button>
+        <button id="openZoom" class="btn ghost" title="Open zoom">Open</button>
+      </div>
+    </aside>
+  </div>
+
+</div>
+
+<div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="zoom" role="document">
+    <button class="close" id="closeModal" aria-label="Close zoom">✕</button>
+    <img id="modalImg" src="" alt="Artwork enlarged" />
+    <div class="caption" id="modalCaption"></div>
+  </div>
+</div>
+
+<audio id="bgMusic" loop crossorigin="anonymous">
+  <source src="audio/gentle-ocean-and-birdsong-24068.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+
+const artworks = [
+  { src: "images/art1.png", title:'Blue Silence', artist:'A. Sharma', year:2023, desc:'A calm oceanic palette exploring negative space', alt:'Abstract blue seascape' },
+  { src:  "images/art2.png",title:'Urban Echoes', artist:'R. Mehta', year:2022, desc:'City geometry rendered in warm tones', alt:'City architecture painting' },
+  { src: "images/art3.png",title:'Chromatic Bloom', artist:'L. Patel', year:2021, desc:'Explosive color study inspired by flora', alt:'Colorful floral abstract' },
+  { src: "images/art4.png",title:'Nocturne', artist:'S. Bose', year:2020, desc:'A contemplative nighttime scene', alt:'Night landscape painting' },
+]
+
+const carousel = document.getElementById('carousel');
+const thumbs = document.getElementById('thumbs');
+const modal = document.getElementById('modal');
+const modalImg = document.getElementById('modalImg');
+const modalCaption = document.getElementById('modalCaption');
+const closeModal = document.getElementById('closeModal');
+const apState = document.getElementById('apState');
+const musicState = document.getElementById('musicState');
+const ambient = document.getElementById('ambient');
+const metaTitle = document.getElementById('metaTitle');
+const metaArtist = document.getElementById('metaArtist');
+
+let currentIndex = 0;
+let autoplay = true;
+let autoplayTimer = null;
+let autoplaySpeed = Number(document.getElementById('speed').value); // ms
+
+function createCards() {
+  carousel.innerHTML = '';
+  const total = artworks.length;
+  for (let i=0;i<total;i++) {
+    const art = artworks[i];
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.setAttribute('role','option');
+    c.setAttribute('data-index', i);
+    c.innerHTML = `
+      <img src="${art.src}" alt="${art.alt}">
+      <div class="label">${art.title} • ${art.artist}</div>
+    `;
+
+    c.addEventListener('click', () => openZoom(i));
+    carousel.appendChild(c);
+  }
+  layoutCarousel();
+}
+
+function layoutCarousel() {
+  const cards = Array.from(carousel.children);
+  const n = cards.length;
+  const radius = Math.min(carousel.clientWidth, carousel.clientHeight) * 0.6; 
+  for (let i=0;i<n;i++) {
+    const theta = (i / n) * Math.PI * 2;
+    const x = Math.sin(theta) * radius;
+    const z = Math.cos(theta) * radius;
+    cards[i].style.transform =  `translateX(${x}px) translateY(-50%) translateZ(${z}px) rotateY(${(i*360/n)}deg)`;
+    cards[i].style.left = '50%';
+    cards[i].style.top = '50%';
+    cards[i].style.transform = `translateX(${x}px) translateY(-50%) translateZ(${z}px) rotateY(${(i*360/n)}deg)`;
+  }
+  updateFocus();
+}
+
+function createThumbs() {
+  const thumbs = document.getElementById("thumbs");
+  if (!thumbs) return;
+
+  thumbs.innerHTML = "";
+
+  artworks.forEach((c, idx) => {
+    const t = document.createElement("div");
+    t.className = "thumb";
+    t.innerHTML = `<img src="${c.src}" alt="thumb">`;
+
+    t.addEventListener("click", () => {
+      goto((currentIndex + 1) % n - n / 2);
+    });
+
+    thumbs.appendChild(t);
+  });
+}
+
+function updateFocus() {
+  const cards = Array.from(carousel.children);
+  const n = cards.length;
+  const angle = (currentIndex / n) * -360;
+  carousel.style.transform = `translateZ(-350px) rotateY(${angle}deg)`;
+  cards.forEach((c, i) => {
+    c.classList.toggle('dim', Math.abs(i - currentIndex) > 2 && Math.abs(i - currentIndex) < n-2);
+  
+    if (i === currentIndex) {
+      c.style.transform += ' translateZ(80px) scale(1.02)';
+    }
+    
+    c.setAttribute('aria-selected', i === currentIndex ? 'true':'false');
+  });
+  
+  const art = artworks[currentIndex];
+  metaTitle.textContent = `${art.title} (${art.year})`;
+  metaArtist.textContent = `${art.artist} • ${art.desc}`;
+  updateThumbs();
+}
+
+function updateThumbs() {
+  const tNodes = Array.from(thumbs.children);
+  tNodes.forEach((tn, i) => {
+    tn.classList.toggle('active', i === currentIndex);
+    if (i === currentIndex) {
+      
+      tn.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+    }
+  });
+}
+
+function goTo(idx) {
+  currentIndex = ((idx % artworks.length) + artworks.length) % artworks.length;
+  updateFocus();
+  resetAutoplay();
+}
+function next() { goTo(currentIndex + 1); }
+function prev() { goTo(currentIndex - 1); }
+
+function openZoom(idx) {
+  const art = artworks[idx];
+  modalImg.src = art.src;
+  modalImg.alt = art.alt;
+  modalCaption.textContent = `${art.title} — ${art.artist} (${art.year}) — ${art.desc}`;
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+  
+  closeModal.focus();
+}
+function closeZoom() {
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  modalImg.src = '';
+}
+
+function startAutoplay() {
+  stopAutoplay();
+  autoplayTimer = setInterval(() => next(), autoplaySpeed);
+  autoplay = true;
+  apState.textContent = 'On';
+}
+function stopAutoplay() {
+  if (autoplayTimer) { clearInterval(autoplayTimer); autoplayTimer = null; }
+  autoplay = false;
+  apState.textContent = 'Off';
+}
+function resetAutoplay() {
+  if (apState.textContent === 'On') {
+    startAutoplay();
+  } else {
+    stopAutoplay();
+  }
+}
+
+function startMusic() {
+  ambient.play().catch(()=>{});
+  musicState.textContent = 'On';
+}
+function stopMusic() {
+  ambient.pause();
+  musicState.textContent = 'Off';
+}
+
+document.getElementById('musicToggle').addEventListener('click', () => {
+  if (musicState.textContent === 'On') { stopMusic(); } else { startMusic(); }
+});
+document.getElementById('autoplayToggle').addEventListener('click', () => {
+  if (apState.textContent === 'On') { stopAutoplay(); } else { startAutoplay(); }
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => { next(); resetAutoplay(); });
+document.getElementById('prevBtn').addEventListener('click', () => { prev(); resetAutoplay(); });
+document.getElementById('nextSmall').addEventListener('click', () => { next(); });
+document.getElementById('prevSmall').addEventListener('click', () => { prev(); });
+
+document.getElementById('openZoom').addEventListener('click', () => openZoom(currentIndex));
+closeModal.addEventListener('click', closeZoom);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeZoom(); });
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const url = artworks[currentIndex].src;
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = artworks[currentIndex].title.replace(/\s+/g,'_') + '.jpg';
+  document.body.appendChild(a); a.click(); a.remove();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (modal.classList.contains('open')) {
+    if (e.key === 'Escape') closeZoom();
+    return;
+  }
+  if (e.key === 'ArrowRight') { next(); resetAutoplay(); }
+  if (e.key === 'ArrowLeft') { prev(); resetAutoplay(); }
+});
+
+let touchStartX = null;
+carousel.addEventListener('touchstart', (e) => {
+  touchStartX = e.changedTouches[0].clientX;
+});
+carousel.addEventListener('touchend', (e) => {
+  if (touchStartX === null) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 40) {
+    if (dx < 0) next(); else prev();
+    resetAutoplay();
+  }
+  touchStartX = null;
+});
+
+window.addEventListener('resize', () => layoutCarousel());
+
+const speedInput = document.getElementById('speed');
+speedInput.addEventListener('input', (e) => {
+  autoplaySpeed = Number(e.target.value);
+  resetAutoplay();
+});
+
+document.getElementById('infoBtn').addEventListener('click', () => {
+  alert('Virtual Art Gallery\n\nUse the arrows, thumbnails, keyboard (← →), or swipe to navigate. Click an artwork to zoom and view details. Toggle ambient music or autoplay from the top controls.');
+});
+
+createCards();
+createThumbs();
+updateFocus();
+startAutoplay();
+startMusic();
+
+const liveRegion = document.createElement('div');
+liveRegion.setAttribute('aria-live','polite');
+liveRegion.style.position='absolute'; liveRegion.style.left='-9999px';
+document.body.appendChild(liveRegion);
+setInterval(() => {
+  liveRegion.textContent = `Viewing: ${artworks[currentIndex].title} by ${artworks[currentIndex].artist}`;
+}, 1200);
+</script>
+</body>
+</html>
+
