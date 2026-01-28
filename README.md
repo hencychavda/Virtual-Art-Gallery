@@ -11,9 +11,13 @@ JavaScript – Interactivity and dynamic behavior
 
 Features:
 3D rotating art carousel
+
 Zoom-in modal view with artwork details
+
 Autoplay and manual navigation
+
 Thumbnail-based quick selection
+
 Responsive and user-friendly UI
 
 This project demonstrates skills in UI design, interactivity, animations, and responsive web development using core front-end technologies.
