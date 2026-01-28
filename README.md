@@ -3,8 +3,10 @@ A modern Virtual Art Gallery web application built using HTML, CSS, and JavaScri
 The gallery allows users to explore artworks seamlessly using buttons, keyboard arrows, swipe gestures, or thumbnails. Each artwork displays relevant details such as title, artist, year, and description, making the experience both engaging and informative. The application is fully responsive and optimized for different screen sizes.
 
 Technologies Used:
-HTML – Structure
-CSS – Styling, animations, and 3D effects
+HTML – Structure,
+
+CSS – Styling, animations, and 3D effects,
+
 JavaScript – Interactivity and dynamic behavior
 
 Features:
