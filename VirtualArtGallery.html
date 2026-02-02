@@ -6,6 +6,7 @@
 <title>Virtual Art Gallery</title>
 <link rel="preconnect" href="https://images.unsplash.com" />
 <style>
+  
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background: linear-gradient(180deg,#0f1724 0%, #071223 60%); color:#fff; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
 
@@ -203,14 +204,13 @@
     <div class="controls">
       <div class="small-controls" aria-hidden="false">
         <button id="autoplayToggle" class="btn ghost" title="Toggle autoplay">Autoplay: <span id="apState">On</span></button>
-        <button id="musicToggle" class="btn ghost" title="Toggle ambient music">Music: <span id="musicState">On</span></button>
         <button id="infoBtn" class="btn ghost" title="Gallery info">Gallery Info</button>
       </div>
     </div>
   </header>
 
   <div style="display:flex; width:100%; max-width:1200px; gap:18px; align-items:flex-start;">
-
+    
     <div style="flex:1;">
       <section class="stage" aria-label="Gallery stage">
         <div id="carousel" class="carousel" role="listbox" aria-live="polite"></div>
@@ -260,25 +260,56 @@
 </div>
 
 <div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
-  <div class="zoom" role="document">
+  <div class="zoom" role="document">g
     <button class="close" id="closeModal" aria-label="Close zoom">✕</button>
     <img id="modalImg" src="" alt="Artwork enlarged" />
     <div class="caption" id="modalCaption"></div>
   </div>
 </div>
 
-<audio id="bgMusic" loop crossorigin="anonymous">
-  <source src="audio/gentle-ocean-and-birdsong-24068.mp3" type="audio/mpeg">
-</audio>
-
 <script>
-
 const artworks = [
-  { src: "images/art1.png", title:'Blue Silence', artist:'A. Sharma', year:2023, desc:'A calm oceanic palette exploring negative space', alt:'Abstract blue seascape' },
-  { src:  "images/art2.png",title:'Urban Echoes', artist:'R. Mehta', year:2022, desc:'City geometry rendered in warm tones', alt:'City architecture painting' },
-  { src: "images/art3.png",title:'Chromatic Bloom', artist:'L. Patel', year:2021, desc:'Explosive color study inspired by flora', alt:'Colorful floral abstract' },
-  { src: "images/art4.png",title:'Nocturne', artist:'S. Bose', year:2020, desc:'A contemplative nighttime scene', alt:'Night landscape painting' },
-]
+  {
+    src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80",
+    title: "Mountain Calm",
+    artist: "Nature Collection",
+    year: 2023,
+    desc: "Peaceful mountains under soft morning light",
+    alt: "Mountain landscape"
+  },
+  {
+    src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+    title: "Forest Path",
+    artist: "Nature Collection",
+    year: 2022,
+    desc: "Green forest pathway with sunlight",
+    alt: "Forest pathway"
+  },
+  {
+    src: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+    title: "Ocean Waves",
+    artist: "Nature Collection",
+    year: 2021,
+    desc: "Blue ocean waves at sunset",
+    alt: "Ocean waves"
+  },
+  {
+    src: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",
+    title: "Green Valley",
+    artist: "Nature Collection",
+    year: 2023,
+    desc: "Wide green valley with clouds",
+    alt: "Green valley"
+  },
+  {
+    src: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=1200&q=80",
+    title: "Lonely Tree",
+    artist: "Nature Collection",
+    year: 2022,
+    desc: "Single tree in open field",
+    alt: "Tree landscape"
+  }
+];
 
 const carousel = document.getElementById('carousel');
 const thumbs = document.getElementById('thumbs');
@@ -287,8 +318,6 @@ const modalImg = document.getElementById('modalImg');
 const modalCaption = document.getElementById('modalCaption');
 const closeModal = document.getElementById('closeModal');
 const apState = document.getElementById('apState');
-const musicState = document.getElementById('musicState');
-const ambient = document.getElementById('ambient');
 const metaTitle = document.getElementById('metaTitle');
 const metaArtist = document.getElementById('metaArtist');
 
@@ -310,7 +339,7 @@ function createCards() {
       <img src="${art.src}" alt="${art.alt}">
       <div class="label">${art.title} • ${art.artist}</div>
     `;
-
+  
     c.addEventListener('click', () => openZoom(i));
     carousel.appendChild(c);
   }
@@ -334,22 +363,26 @@ function layoutCarousel() {
 }
 
 function createThumbs() {
-  const thumbs = document.getElementById("thumbs");
-  if (!thumbs) return;
-
   thumbs.innerHTML = "";
 
-  artworks.forEach((c, idx) => {
-    const t = document.createElement("div");
-    t.className = "thumb";
-    t.innerHTML = `<img src="${c.src}" alt="thumb">`;
+  artworks.forEach((art, index) => {
+    const img = document.createElement("img");
+    img.src = art.src;
+    img.alt = art.title;
+    img.style.width = "80px";
+    img.style.cursor = "pointer";
 
-    t.addEventListener("click", () => {
-      goto((currentIndex + 1) % n - n / 2);
-    });
+    img.onclick = () => {
+      showArtwork(index);
+    };
 
-    thumbs.appendChild(t);
+    thumbs.appendChild(img);
   });
+}
+
+function showArtwork(index) {
+  const art = artworks[index];
+  carousel.innerHTML = `<img src="${art.src}" alt="${art.title}">`;
 }
 
 function updateFocus() {
@@ -359,7 +392,7 @@ function updateFocus() {
   carousel.style.transform = `translateZ(-350px) rotateY(${angle}deg)`;
   cards.forEach((c, i) => {
     c.classList.toggle('dim', Math.abs(i - currentIndex) > 2 && Math.abs(i - currentIndex) < n-2);
-  
+
     if (i === currentIndex) {
       c.style.transform += ' translateZ(80px) scale(1.02)';
     }
@@ -378,7 +411,6 @@ function updateThumbs() {
   tNodes.forEach((tn, i) => {
     tn.classList.toggle('active', i === currentIndex);
     if (i === currentIndex) {
-      
       tn.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
     }
   });
@@ -399,7 +431,6 @@ function openZoom(idx) {
   modalCaption.textContent = `${art.title} — ${art.artist} (${art.year}) — ${art.desc}`;
   modal.classList.add('open');
   modal.setAttribute('aria-hidden','false');
-  
   closeModal.focus();
 }
 function closeZoom() {
@@ -427,22 +458,6 @@ function resetAutoplay() {
   }
 }
 
-function startMusic() {
-  ambient.play().catch(()=>{});
-  musicState.textContent = 'On';
-}
-function stopMusic() {
-  ambient.pause();
-  musicState.textContent = 'Off';
-}
-
-document.getElementById('musicToggle').addEventListener('click', () => {
-  if (musicState.textContent === 'On') { stopMusic(); } else { startMusic(); }
-});
-document.getElementById('autoplayToggle').addEventListener('click', () => {
-  if (apState.textContent === 'On') { stopAutoplay(); } else { startAutoplay(); }
-});
-
 document.getElementById('nextBtn').addEventListener('click', () => { next(); resetAutoplay(); });
 document.getElementById('prevBtn').addEventListener('click', () => { prev(); resetAutoplay(); });
 document.getElementById('nextSmall').addEventListener('click', () => { next(); });
@@ -454,7 +469,6 @@ modal.addEventListener('click', (e) => { if (e.target === modal) closeZoom(); })
 
 document.getElementById('downloadBtn').addEventListener('click', () => {
   const url = artworks[currentIndex].src;
-  
   const a = document.createElement('a');
   a.href = url;
   a.download = artworks[currentIndex].title.replace(/\s+/g,'_') + '.jpg';
@@ -485,7 +499,6 @@ carousel.addEventListener('touchend', (e) => {
 });
 
 window.addEventListener('resize', () => layoutCarousel());
-
 const speedInput = document.getElementById('speed');
 speedInput.addEventListener('input', (e) => {
   autoplaySpeed = Number(e.target.value);
@@ -500,7 +513,6 @@ createCards();
 createThumbs();
 updateFocus();
 startAutoplay();
-startMusic();
 
 const liveRegion = document.createElement('div');
 liveRegion.setAttribute('aria-live','polite');
@@ -512,4 +524,3 @@ setInterval(() => {
 </script>
 </body>
 </html>
-
